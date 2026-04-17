@@ -29,7 +29,7 @@ typedef unsigned char* bytes;
 const int MAX_CONNECTIONS = 100;
 
 void validate_cli_args(int argc, string argv[]);
-void validate_retrieved_args(int http_port, string log_file, string root_folder);
+void validate_retrieved_args(int http_port, string folder_log_file, string root_folder);
 bool test_existence_directory(string folder);
 bool is_substring(string flag, string str);
 bool starts_with_slash(string path);
@@ -39,17 +39,17 @@ void create_server(int http_port);
 // MAIN
 int main(int argc, string argv[]) {
 
-    // 1. Validate usage is ./server <HTTP PORT> <LOG FILE> <ABS ROOT FOLDER>
+    // 1. Validate usage is ./server <HTTP PORT> <ABS FOLDER/LOG FILE> <ABS ROOT FOLDER>
     validate_cli_args(argc, argv);
     int http_port = atoi(argv[1]);
-    string log_file = argv[2];
+    string folder_log_file = argv[2];
     string root_folder = argv[3];
-    validate_retrieved_args(http_port, log_file, root_folder);
-    if (is_substring(root_folder, log_file)) {
+    validate_retrieved_args(http_port, folder_log_file, root_folder);
+    if (is_substring(root_folder, folder_log_file)) {
         printf("[Error] Writing logs in <ABS ROOT FOLDER> is not allowed because of race condition errors\n");
         exit(EXIT_FAILURE);
     }
-    printf("[Beware] Logs are being written in: %s\n", log_file);
+    printf("[Beware] Logs are being written in: %s\n", folder_log_file);
     printf("[Beware] Retrieving resources from: %s\n", root_folder);
 
     // 2. Create server using the given http_port
@@ -67,16 +67,16 @@ int main(int argc, string argv[]) {
 //------------------------------------------------------------------------------------------------------
 // FUNCTION 1
 void validate_cli_args(int argc, string argv[]) {
-    // Usage: ./server <HTTP PORT> <LOG FILE> <ABS ROOT FOLDER>
+    // Usage: ./server <HTTP PORT> <ABS FOLDER/LOG FILE> <ABS ROOT FOLDER>
     //           (1)       (2)        (3)          (4)
     if (argc != 4) {
-        printf("[Error] (too many/few args?) Usage: ./server <HTTP PORT> <LOG FILE> <ABS ROOT FOLDER>\n");
+        printf("[Error] (too many/few args?) Usage: ./server <HTTP PORT> <ABS FOLDER/LOG FILE> <ABS ROOT FOLDER>\n");
         exit(EXIT_FAILURE);
     }
 }
 //------------------------------------------------------------------------------------------------------
 // FUNCTION 2
-void validate_retrieved_args(int http_port, string log_file, string root_folder) {
+void validate_retrieved_args(int http_port, string folder_log_file, string root_folder) {
     bool errors_flag = false;
 
     // Check http_port is greater than 0
@@ -84,17 +84,17 @@ void validate_retrieved_args(int http_port, string log_file, string root_folder)
         printf("[Error] <HTTP PORT> must be an integer greater than 0\n");
         errors_flag = true;
     }
-    // Check log_file is not an integer
-    if (atoi(log_file) != 0) {
-        printf("[Error] <LOG FILE> should NOT be an integer\n");
+    // Check folder/log_file is not an integer
+    if (atoi(folder_log_file) != 0) {
+        printf("[Error] <ABS FOLDER/LOG FILE> should NOT be an integer\n");
         errors_flag = true;
     }
 
     // Check log_file contains the suffixes either ".txt" or ".log" ==> How to achieve this? (check ELSE block)
-    int len_log_file = strlen(log_file);
-    if (len_log_file <= 4) {
+    int len_folder_log_file = strlen(folder_log_file);
+    if (len_folder_log_file <= 4) {
         // Does there exist x s.t x.txt or x.log?
-        printf("[Error] <LOG FILE> isn't .txt or .log, or filename is empty\n");
+        printf("[Error] <ABS FOLDER/LOG FILE> extensions' isn't .txt or .log, or filename is empty\n");
         errors_flag = true;
     } else {
         // Start by storing the possible suffixes for a logger
@@ -107,35 +107,35 @@ void validate_retrieved_args(int http_port, string log_file, string root_folder)
         char file_extension[4+1] = {0};
 
         // E.g., string x = "abcdef.txt", then lower = pos(.)
-        int lower = len_log_file - 4;
+        int lower = len_folder_log_file - 4;
         
         // Usage: strncpy(string, src string ~ index to copy, max of chars to copy)
-        strncpy(file_extension, &log_file[lower], length_suffixes);
+        strncpy(file_extension, &folder_log_file[lower], length_suffixes);
         file_extension[4] = '\0';
 
         // Usage: strncmp == 0 iff str1 stringly equals to str2
         if (strcmp(file_extension, suffix1) == 0 || strcmp(file_extension, suffix2) == 0) {
             // Pass
         } else {
-            printf("[Error] <LOG FILE> isn't .txt or .log\n");
+            printf("[Error] <ABS FOLDER/LOG FILE> extensions' isn't .txt or .log\n");
             errors_flag = true;
         }
     }
 
     // LOG FILE requires absolute path, and it must be writtable
-    if (!starts_with_slash(log_file)) {
-        printf("[Error] <LOG FILE> must be given with an absolute path (if it doesn't exist, it will be created in the given directory)\n");
+    if (!starts_with_slash(folder_log_file)) {
+        printf("[Error] <ABS FOLDER/LOG FILE> must be given with an absolute path (if it doesn't exist, it will be created in the given directory)\n");
         errors_flag = true;
     } else {
-        FILE* pF = fopen(log_file, "a");
+        FILE* pF = fopen(folder_log_file, "a");
         if (pF == NULL) {
             /*
             ~ THIS CODE WAS REMOVED FOR SIMPLICITY ~
-            printf("[Error] Does <LOG FILE> target path exists? Do you have perms? ");
+            printf("[Error] Does <ABS FOLDER/LOG FILE> target path exists? Do you have perms? ");
             fflush(stdout);
             perror("File pointer says");
             */
-            printf("[Error] Does <LOG FILE> target path exists? Do you have perms? Did you end path with /<filename>.txt or /<filename>.log?\n");
+            printf("[Error] Does <ABS FOLDER/LOG FILE> target path exists? Do you have perms? Did you end path with /<filename>.txt or /<filename>.log?\n");
             errors_flag = true;
         } else {
             fclose(pF);
@@ -166,7 +166,7 @@ void validate_retrieved_args(int http_port, string log_file, string root_folder)
 
     // Exit if any errors
     if (errors_flag) {
-        printf("[Error] Need help? Usage is ./server <HTTP PORT> <LOG FILE> <ABS ROOT FOLDER>\n");
+        printf("[Error] Need help? Usage is ./server <HTTP PORT> <ABS FOLDER/LOG FILE> <ABS ROOT FOLDER>\n");
         exit(EXIT_FAILURE);
     }
 }
@@ -256,8 +256,8 @@ bool is_substring(string flag, string str) {
     return strstr(str, flag) != NULL;
 }
 // FUNCTION 3
-void logger(string log_file) {
-    FILE* pF = fopen(log_file, "a");
+void logger(string folder_log_file) {
+    FILE* pF = fopen(folder_log_file, "a");
     fprintf(pF, "hey");
     fclose(pF);
 }
