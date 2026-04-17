@@ -1,7 +1,7 @@
 
 # When did we use AI?
 
-prompt 1. explain this c syntax: bind(server_fd, (struct sockaddr*)&address, sizeof(address))
+## prompt 1. explain this c syntax: bind(server_fd, (struct sockaddr*)&address, sizeof(address))
 
 what we learned:
 
@@ -11,11 +11,19 @@ to a type of (struct sockaddr*), a pointer basically. This means that C just exp
 
 struct sockaddr * <-> pointer of type struct sockaddr. Actual memory layout is struct sockaddr_in, but we need struct sockaddr *. We have to get its memory location &sockaddr_in, and then cast it as a sockaddr, i.e, (struct sockaddr *)
 
+## prompt 2. multithread verson of struct tm date = *localtime(&time(NULL));
+
+what we learned:
+
+localtime() is not safe because it returns a pointer to a shared static struct tm buffer, which can lead to race condition errors.
+
 # Utils
 
 Format Specifiers in C - Geeksforgeeks
 
 C: perror, stdout output order - https://stackoverflow.com/questions/8773996
+
+Learn enums in 8 minutes! - youtube.com/watch?v=sU0XQ3jSsu8
 
 # Parsing stuff
 
@@ -44,3 +52,7 @@ Socket Programming in C - Geeksforgeeks
 # I/O
 
 Check substring exists in a string in C - stackoverflow.com/questions/12784766
+
+# DATES
+
+How to get current time and date in C - youtube.com/watch?v=i1MeXMciy6Q
