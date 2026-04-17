@@ -1,4 +1,4 @@
-// INCLUDE LIBRARIES
+// INCLUDE HEADERS
 #include <stdio.h> // printf, ...
 #include <stdbool.h> // bool, ...
 #include <stdlib.h> // EXIT_FAILURE, EXIT_SUCCESS, exit(), malloc(), free(), ...
@@ -33,8 +33,11 @@ int main(int argc, string argv[]) {
 // ------------------------------------------------------
 // ------------------------------------------------------
 // ------------------------------------------------------
+
 // FUNCTIONS
 
+//------------------------------------------------------------------------------------------------------
+// FUNCTION 1
 void validate_cli_args(int argc, string argv[]) {
     // Usage: ./server <HTTP PORT> <LOG FILE> <ROOT FOLDER>
     //           (1)       (2)        (3)          (4)
@@ -43,7 +46,8 @@ void validate_cli_args(int argc, string argv[]) {
         exit(EXIT_FAILURE);
     }
 }
-
+//------------------------------------------------------------------------------------------------------
+// FUNCTION 2
 void validate_retrieved_args(int http_port, string log_file, string root_folder) {
     bool errors_flag = false;
 
@@ -58,14 +62,14 @@ void validate_retrieved_args(int http_port, string log_file, string root_folder)
         errors_flag = true;
     }
 
-    // Check log_file contains the suffixes either ".txt" or ".log"
+    // Check log_file contains the suffixes either ".txt" or ".log" ==> How to achieve this? (check ELSE block)
     int len_log_file = strlen(log_file);
     if (len_log_file <= 4) {
         // Does there exist x s.t x.txt or x.log?
         printf("[Error] <LOG FILE> isn't .txt or .log, or filename is empty\n");
         errors_flag = true;
     } else {
-        // How to achieve this? start storing the suffixes
+        // Start by storing the possible suffixes for a logger
         int length_suffixes = 4;
         string suffix1 = ".txt";
         string suffix2 = ".log";
@@ -104,7 +108,8 @@ void validate_retrieved_args(int http_port, string log_file, string root_folder)
         exit(EXIT_FAILURE);
     }
 }
-
+//------------------------------------------------------------------------------------------------------
+// FUNCTION 3
 bool test_existence_directory(string folder) {
     DIR* dir = opendir(folder);
     if (dir) {
