@@ -36,6 +36,8 @@ bool starts_with_slash(string path);
 
 void create_server(int http_port);
 
+void logger(string folder_log_file);
+
 // MAIN
 int main(int argc, string argv[]) {
 
@@ -51,6 +53,8 @@ int main(int argc, string argv[]) {
     }
     printf("[Beware] Logs are being written in: %s\n", folder_log_file);
     printf("[Beware] Retrieving resources from: %s\n", root_folder);
+
+    logger(folder_log_file);
 
     // 2. Create server using the given http_port
     printf("[Beware] Check your IP on the bash\n\n");
@@ -258,6 +262,6 @@ bool is_substring(string flag, string str) {
 // FUNCTION 3
 void logger(string folder_log_file) {
     FILE* pF = fopen(folder_log_file, "a");
-    fprintf(pF, "hey");
+    fprintf(pF, "hey\n");
     fclose(pF);
 }
