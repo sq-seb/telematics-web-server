@@ -17,7 +17,9 @@ what we learned:
 
 localtime() is not safe because it returns a pointer to a shared static struct tm buffer, which can lead to race condition errors.
 
-# Utils
+# References
+
+## Utils
 
 Format Specifiers in C - Geeksforgeeks
 
@@ -25,7 +27,9 @@ C: perror, stdout output order - https://stackoverflow.com/questions/8773996
 
 Learn enums in 8 minutes! - youtube.com/watch?v=sU0XQ3jSsu8
 
-# Parsing stuff
+snprintf () - Imprimir datos formateados en almacenamiento intermedio - ibm.com/docs/es/i/7.5.0?topic=functions-snprintf-printf-formatted-data-buffer
+
+## Parsing stuff
 
 Command Line Arguments in C - Geeksforgeeks
 
@@ -39,7 +43,7 @@ C strcmp() - Geeksforgeeks
 
 Opendir function() in C use: - reddit.com/r/learnprogramming/...
 
-# Sockets
+## Sockets
 
 A Beginners Guide to Socket Programming in C - SanjayRV, dev.to
 
@@ -49,10 +53,10 @@ C sockets for dummies - Nita Andrei
 
 Socket Programming in C - Geeksforgeeks
 
-# I/O
+## I/O
 
 Check substring exists in a string in C - stackoverflow.com/questions/12784766
 
-# DATES
+## DATES
 
 How to get current time and date in C - youtube.com/watch?v=i1MeXMciy6Q
