@@ -6,6 +6,12 @@
 // %s -> string specifiers
 // %p -> address specifiers
 
+// TESTING:
+// ./server 8080 /home/user/Documents/tws/logger.log /home/user/Desktop/stuff
+
+// MORE TYPES
+typedef char* string;
+typedef unsigned char* bytes;
 
 // INCLUDE HEADERS
 #include <stdio.h> // printf, ...
@@ -22,28 +28,35 @@
 // UTILS
 const int MAX_CONNECTIONS = 100;
 
-typedef char* string;
 void validate_cli_args(int argc, string argv[]);
 void validate_retrieved_args(int http_port, string log_file, string root_folder);
 bool test_existence_directory(string folder);
+bool is_substring(string flag, string str);
+bool starts_with_slash(string path);
 
 void create_server(int http_port);
 
 // MAIN
 int main(int argc, string argv[]) {
-    printf("[Program] Reminder: check your IP on your OS bash\n");
 
-    // 1. Validate usage is ./server <HTTP PORT> <LOG FILE> <ROOT FOLDER>
+    // 1. Validate usage is ./server <HTTP PORT> <LOG FILE> <ABS ROOT FOLDER>
     validate_cli_args(argc, argv);
     int http_port = atoi(argv[1]);
     string log_file = argv[2];
     string root_folder = argv[3];
     validate_retrieved_args(http_port, log_file, root_folder);
+    if (is_substring(root_folder, log_file)) {
+        printf("[Error] Writing logs in <ABS ROOT FOLDER> is not allowed because of race condition errors\n");
+        exit(EXIT_FAILURE);
+    }
+    printf("[Beware] Logs are being written in: %s\n", log_file);
+    printf("[Beware] Retrieving resources from: %s\n", root_folder);
 
     // 2. Create server using the given http_port
+    printf("[Beware] Check your IP on the bash\n\n");
     create_server(http_port);
 
-    printf("[Program] Success, returned 0\n");
+    printf("[Message] Success, returned 0\n");
     exit(EXIT_SUCCESS);
 }
 // ------------------------------------------------------
@@ -54,10 +67,10 @@ int main(int argc, string argv[]) {
 //------------------------------------------------------------------------------------------------------
 // FUNCTION 1
 void validate_cli_args(int argc, string argv[]) {
-    // Usage: ./server <HTTP PORT> <LOG FILE> <ROOT FOLDER>
+    // Usage: ./server <HTTP PORT> <LOG FILE> <ABS ROOT FOLDER>
     //           (1)       (2)        (3)          (4)
     if (argc != 4) {
-        printf("[Error] (too many/few args?) Usage: ./server <HTTP PORT> <LOG FILE> <ROOT FOLDER>\n");
+        printf("[Error] (too many/few args?) Usage: ./server <HTTP PORT> <LOG FILE> <ABS ROOT FOLDER>\n");
         exit(EXIT_FAILURE);
     }
 }
@@ -109,17 +122,51 @@ void validate_retrieved_args(int http_port, string log_file, string root_folder)
         }
     }
 
-    // Check if root_folder exists
-    if (test_existence_directory(root_folder)) {
-        // Pass
+    // LOG FILE requires absolute path, and it must be writtable
+    if (!starts_with_slash(log_file)) {
+        printf("[Error] <LOG FILE> must be given with an absolute path (if it doesn't exist, it will be created in the given directory)\n");
+        errors_flag = true;
     } else {
+        FILE* pF = fopen(log_file, "a");
+        if (pF == NULL) {
+            /*
+            ~ THIS CODE WAS REMOVED FOR SIMPLICITY ~
+            printf("[Error] Does <LOG FILE> target path exists? Do you have perms? ");
+            fflush(stdout);
+            perror("File pointer says");
+            */
+            printf("[Error] Does <LOG FILE> target path exists? Do you have perms? Did you end path with /<filename>.txt or /<filename>.log?\n");
+            errors_flag = true;
+        } else {
+            fclose(pF);
+        }
+    }
+
+    // Check if root_folder exists
+    if (!starts_with_slash(root_folder)) {
+        printf("[Error] <ROOT FOLDER> must be given with an absolute path and MUST exist already\n");
+        errors_flag = true;
+    } else if (!test_existence_directory(root_folder)) {
         printf("[Error] <ROOT FOLDER> doesn't exist or isn't a directory, or you may not have perms to open it\n");
         errors_flag = true;
     }
 
+    /*
+    ~ THIS CODE WAS REMOVED FOR SIMPLICITY ~
+    if (test_existence_directory(root_folder)) {
+        if (!starts_with_slash(root_folder)) {
+            printf("[Error] <ROOT FOLDER> exists relatively to current path, but you must provide absolute path\n");
+            errors_flag = true;
+        }
+    } else {
+        printf("[Error] <ROOT FOLDER> doesn't exist or isn't a directory, or you may not have perms to open it\n");
+        errors_flag = true;
+    }
+    */
+
     // Exit if any errors
     if (errors_flag) {
-        printf("[Error] Need help? Usage is ./server <HTTP PORT> <LOG FILE> <ROOT FOLDER>\n");
+        printf("[Error] Need help? Usage is ./server <HTTP PORT> <LOG FILE> <ABS ROOT FOLDER>\n");
         exit(EXIT_FAILURE);
     }
 }
@@ -195,4 +242,22 @@ void create_server(int http_port) {
 
         close(client_socketfd);
     }
+}
+
+
+// I/O, PATH VALIDATION
+// ------------------------------------------------------
+// FUNCTION 1
+bool starts_with_slash(string path) {
+    return path[0] == '/';
+}
+// FUNCTION 2
+bool is_substring(string flag, string str) {
+    return strstr(str, flag) != NULL;
+}
+// FUNCTION 3
+void logger(string log_file) {
+    FILE* pF = fopen(log_file, "a");
+    fprintf(pF, "hey");
+    fclose(pF);
 }

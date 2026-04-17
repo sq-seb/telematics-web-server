@@ -40,3 +40,7 @@ Linux File Descriptors - medium.com/@tharinduimalka915
 C sockets for dummies - Nita Andrei
 
 Socket Programming in C - Geeksforgeeks
+
+# I/O
+
+Check substring exists in a string in C - stackoverflow.com/questions/12784766
