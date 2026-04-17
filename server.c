@@ -1,24 +1,37 @@
+// FORMAT SPECIFIERS
+// %c -> char
+// %d -> signed integer (d = decimal)
+// %u -> unsigned integer
+// %f -> floating-point numbers
+// %s -> string specifiers
+// %p -> address specifiers
+
+
 // INCLUDE HEADERS
 #include <stdio.h> // printf, ...
 #include <stdbool.h> // bool, ...
 #include <stdlib.h> // EXIT_FAILURE, EXIT_SUCCESS, exit(), malloc(), free(), ...
 #include <string.h> // strings stuff
-
-#include <unistd.h> // close()
-#include <sys/socket.h>
-#include <netinet/in.h>
-
 #include <dirent.h> // opendir()
 
+#include <sys/types.h> // Common types
+#include <sys/socket.h> // socket utils
+#include <unistd.h> // unix api, for close(), etc.
+#include <netinet/in.h> // protocol utils
 
 // UTILS
+const int MAX_CONNECTIONS = 100;
+
 typedef char* string;
 void validate_cli_args(int argc, string argv[]);
 void validate_retrieved_args(int http_port, string log_file, string root_folder);
 bool test_existence_directory(string folder);
 
+void create_server(int http_port);
+
 // MAIN
 int main(int argc, string argv[]) {
+    printf("[Program] Reminder: check your IP on your OS bash\n");
 
     // 1. Validate usage is ./server <HTTP PORT> <LOG FILE> <ROOT FOLDER>
     validate_cli_args(argc, argv);
@@ -27,15 +40,17 @@ int main(int argc, string argv[]) {
     string root_folder = argv[3];
     validate_retrieved_args(http_port, log_file, root_folder);
 
-    printf("[Success] returned 0\n");
-    return EXIT_SUCCESS;
+    // 2. Create server using the given http_port
+    create_server(http_port);
+
+    printf("[Program] Success, returned 0\n");
+    exit(EXIT_SUCCESS);
 }
 // ------------------------------------------------------
 // ------------------------------------------------------
 // ------------------------------------------------------
 
-// FUNCTIONS
-
+// PARSING
 //------------------------------------------------------------------------------------------------------
 // FUNCTION 1
 void validate_cli_args(int argc, string argv[]) {
@@ -117,5 +132,67 @@ bool test_existence_directory(string folder) {
         return true;
     } else {
         return false;
+    }
+}
+
+
+
+// SOCKETS (btw, fd <-> file descriptor. Everything is treated like files, even sockets)
+//         fd = a structure with an id, e.g., 0 -> file.txt, 1 -> hello.html, 2 -> socket !!!
+// -----------------------------------------------------------
+// FUNCTION 1
+void create_server(int http_port) {
+    // int socketfd (domain, type, protocol)
+    //      There used to be multiple STREAM types of sockets. However, nowadays TCP
+    //      is prolly the most (if not only) used, hence protocol = 0 <-> TCP
+    
+    //      server_socketfd returns descriptor of -1 if it fails to be created
+    // 1. Creating the socket
+    int server_socketfd = socket(AF_INET, SOCK_STREAM, 0);
+    if (server_socketfd < 0) {
+        printf("[Error] Socket failed to create. ");
+        fflush(stdout);
+        perror("server_socketfd says");
+        exit(EXIT_FAILURE);
+    }
+
+    //      sin = (s)ocket (in)ternet? btw host() -> network bytes, INADDR_ANY -> '0.0.0.0'
+    // 2. Fetching the address family ~ (HOST, PORT) (order is inverted in C unlike Python)
+    struct sockaddr_in server_addr;
+    server_addr.sin_family = AF_INET;
+    server_addr.sin_port = htons(http_port);
+    server_addr.sin_addr.s_addr = INADDR_ANY;
+
+    // 3. Bind the socket to the specified port, same logic, -1 = failed.
+    if (bind(server_socketfd, (struct sockaddr*) &server_addr, sizeof(server_addr)) < 0) {
+        printf("[Error] Socket failed to bind. ");
+        fflush(stdout);
+        perror("server_socketfd says");
+        exit(EXIT_FAILURE);
+    }
+
+    // 4. Listen for incoming clients
+    if (listen(server_socketfd, MAX_CONNECTIONS) < 0) {
+        printf("[Error] Socket failed to listen. ");
+        fflush(stdout);
+        perror("server_socketfd says");
+        exit(EXIT_FAILURE);
+    }
+    printf("[Server] Listening on port %d\n", http_port);
+
+    // 5. Handle connections (no threads for now though)
+    while (true) {
+        int client_socketfd = accept(server_socketfd, NULL, NULL);
+
+        char response[] =
+            "HTTP/1.1 200 OK\r\n"
+            "Content-Type: text/html\r\n"
+            "Content-Length: 22\r\n"
+            "\r\n"
+            "<h1>Hello world</h1>";
+
+        send(client_socketfd, response, sizeof(response) - 1, 0);
+
+        close(client_socketfd);
     }
 }
